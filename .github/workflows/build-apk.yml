@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
+    defaults:
+      run:
+        working-directory: OREFRONT_Enhanced_Android_Source
+
     steps:
       - name: Download source
         uses: actions/checkout@v4
@@ -21,7 +25,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Test strategy, defensive turrets, and six-client network protocol
+      - name: Test Game AI and LAN
         run: |
           mkdir -p /tmp/orefront-tests
           javac -d /tmp/orefront-tests \
@@ -32,26 +36,25 @@ jobs:
             java -cp /tmp/orefront-tests "$name"
           done
 
-      - name: Set up Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Install Android API 35
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Set up Gradle 8.9
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
+      - name: Build Android APK
         run: gradle :app:assembleDebug --no-daemon
 
-      - name: Give APK a clear name
+      - name: Rename APK
         run: cp app/build/outputs/apk/debug/app-debug.apk OREFRONT-Enhanced.apk
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: OREFRONT-Enhanced-Android-APK
-          path: OREFRONT-Enhanced.apk
-          retention-days: 30
+          path: OREFRONT_Enhanced_Android_Source/OREFRONT-Enhanced.apk
