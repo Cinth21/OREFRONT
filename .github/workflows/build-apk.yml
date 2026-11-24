@@ -1,0 +1,57 @@
+
+name: Build OREFRONT Enhanced Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Test strategy, defensive turrets, and six-client network protocol
+        run: |
+          mkdir -p /tmp/orefront-tests
+          javac -d /tmp/orefront-tests \
+            app/src/main/java/com/student/orefront/GameCore.java \
+            app/src/main/java/com/student/orefront/LanRoom.java \
+            tests/*.java
+          for name in StrategySmokeTest SixPlayerLanTest BattleResultsTest EnhancedFeatureTest; do
+            java -cp /tmp/orefront-tests "$name"
+          done
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android API 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        run: gradle :app:assembleDebug --no-daemon
+
+      - name: Give APK a clear name
+        run: cp app/build/outputs/apk/debug/app-debug.apk OREFRONT-Enhanced.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OREFRONT-Enhanced-Android-APK
+          path: OREFRONT-Enhanced.apk
+          retention-days: 30
